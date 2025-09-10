@@ -44,6 +44,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.0")
 
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+
+
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.5")
 
