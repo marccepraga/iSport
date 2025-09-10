@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Event
 import com.example.isport.ui.screens.FacilitiesScreen
 import com.example.isport.ui.screens.BookingsScreen
 import com.example.isport.ui.screens.ProfileScreen
+import com.example.isport.ui.screens.BookingForm
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,15 +58,21 @@ fun ISportApp() {
                 }
             }
         }
-    ) { innerPadding ->   // 👈 nome corretto
+    ) { innerPadding ->
         NavHost(
             navController = nav,
             startDestination = "facilities",
-            modifier = Modifier.padding(innerPadding) // 👈 import corretto
+            modifier = Modifier.padding(innerPadding)
         ) {
-            composable("facilities") { FacilitiesScreen() }
+            composable("facilities") { FacilitiesScreen(nav) } // 👈 passo il nav
             composable("bookings") { BookingsScreen(userId = fakeUserId) }
             composable("profile") { ProfileScreen(userId = fakeUserId) }
+            composable("bookingForm/{facilityId}") { backStack ->
+                val fid = backStack.arguments?.getString("facilityId") ?: ""
+                BookingForm(userId = fakeUserId, facilityId = fid) {
+                    nav.popBackStack() // 👈 torna indietro dopo prenotazione
+                }
+            }
         }
     }
 }

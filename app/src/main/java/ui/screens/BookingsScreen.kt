@@ -15,12 +15,17 @@ import com.google.firebase.firestore.ListenerRegistration
 fun BookingsScreen(userId: String) {
     val db = FirebaseFirestore.getInstance()
     var bookings by remember { mutableStateOf<List<Booking>>(emptyList()) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // 📡 Listener realtime su Firestore
     DisposableEffect(Unit) {
         val reg: ListenerRegistration = db.collection("bookings")
             .whereEqualTo("userId", userId)
             .addSnapshotListener { snap, e ->
-                if (e != null) return@addSnapshotListener
+                if (e != null) {
+                    errorMsg = e.message
+                    return@addSnapshotListener
+                }
                 bookings = snap?.documents?.mapNotNull { doc ->
                     doc.toObject(Booking::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
@@ -33,20 +38,37 @@ fun BookingsScreen(userId: String) {
             Text("Le mie prenotazioni", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))
 
+            if (errorMsg != null) {
+                Text("Errore: $errorMsg", color = MaterialTheme.colorScheme.error)
+            }
+
             if (bookings.isEmpty()) {
                 Text("Nessuna prenotazione trovata")
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(bookings, key = { it.id }) { b ->
-                        Card {
-                            Column(Modifier.padding(16.dp)) {
-                                Text("Campo: ${b.facilityId}")
-                                Text("Durata: ${b.durationHours}h")
-                                Text("Data: ${b.date?.toDate()}")
-                            }
-                        }
+                        BookingCard(b, onDelete = {
+                            db.collection("bookings").document(b.id).delete()
+                        })
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BookingCard(b: Booking, onDelete: () -> Unit) {
+    Card {
+        Column(Modifier.padding(16.dp)) {
+            Text("Campo: ${b.facilityId}", style = MaterialTheme.typography.titleMedium)
+            Text("Durata: ${b.durationHours}h")
+            Text("Data: ${b.date?.toDate()}")
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = { onDelete() }, colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )) {
+                Text("Cancella")
             }
         }
     }
