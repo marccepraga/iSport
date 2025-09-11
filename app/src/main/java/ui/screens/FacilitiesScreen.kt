@@ -11,6 +11,8 @@ import androidx.navigation.NavController
 import com.example.isport.model.Facility
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import android.net.Uri
+
 
 @Composable
 fun FacilitiesScreen(nav: NavController? = null) {
@@ -39,8 +41,8 @@ fun FacilitiesScreen(nav: NavController? = null) {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(facilities, key = { it.id }) { f ->
                         FacilityCard(f) {
-                            // 👇 quando premi "Prenota" vai al form
-                            nav?.navigate("bookingForm/${f.id}")
+                            nav?.navigate("bookingForm/${Uri.encode(f.id)}/${Uri.encode(f.name)}")
+
                         }
                     }
                 }
@@ -59,7 +61,7 @@ private fun FacilityCard(f: Facility, onBook: () -> Unit) {
                 Text("Note: ${f.notes}", style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
-            Button(onClick = onBook) {
+            Button(onClick = { onBook() }) {
                 Text("Prenota")
             }
         }

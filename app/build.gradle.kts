@@ -45,6 +45,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.0")
 
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("com.google.firebase:firebase-auth-ktx")
 
 
     // Navigation Compose

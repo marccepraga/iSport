@@ -7,12 +7,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.isport.model.Booking
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
 @Composable
-fun BookingsScreen(userId: String) {
+fun BookingsScreen(userId: String, nav: NavController? = null) {
     val db = FirebaseFirestore.getInstance()
     var bookings by remember { mutableStateOf<List<Booking>>(emptyList()) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
@@ -35,11 +36,22 @@ fun BookingsScreen(userId: String) {
 
     Scaffold { padding ->
         Column(Modifier.padding(padding).padding(16.dp)) {
-            Text("Le mie prenotazioni", style = MaterialTheme.typography.headlineSmall)
+            // 🔹 Titolo + Pulsante per tornare ai campi
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Le mie prenotazioni", style = MaterialTheme.typography.headlineSmall)
+                TextButton(onClick = { nav?.navigate("facilities") }) {
+                    Text("Torna ai campi")
+                }
+            }
+
             Spacer(Modifier.height(12.dp))
 
             if (errorMsg != null) {
                 Text("Errore: $errorMsg", color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
             }
 
             if (bookings.isEmpty()) {
@@ -65,9 +77,10 @@ private fun BookingCard(b: Booking, onDelete: () -> Unit) {
             Text("Durata: ${b.durationHours}h")
             Text("Data: ${b.date?.toDate()}")
             Spacer(Modifier.height(8.dp))
-            Button(onClick = { onDelete() }, colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error
-            )) {
+            Button(
+                onClick = onDelete,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
                 Text("Cancella")
             }
         }
