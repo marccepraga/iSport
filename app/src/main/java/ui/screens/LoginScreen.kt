@@ -1,6 +1,5 @@
 package com.example.isport.ui.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,7 +14,6 @@ import androidx.navigation.NavController
 import com.example.isport.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
 
 @Composable
 fun LoginScreen(nav: NavController) {
@@ -93,7 +91,6 @@ fun LoginScreen(nav: NavController) {
                 loading = true
 
                 if (isRegistering) {
-                    // 🔐 VALIDAZIONE BASE
                     if (name.isBlank()) {
                         error = "Inserisci il nome"
                         loading = false
@@ -105,7 +102,6 @@ fun LoginScreen(nav: NavController) {
                         return@Button
                     }
 
-                    // 📦 REGISTRA
                     auth.createUserWithEmailAndPassword(email, password)
                         .addOnSuccessListener { res ->
                             val uid = res.user?.uid ?: return@addOnSuccessListener
@@ -113,12 +109,12 @@ fun LoginScreen(nav: NavController) {
                                 id = uid,
                                 name = name,
                                 email = email,
-                                isResident = true // default
+                                isResident = true
                             )
 
                             db.collection("users").document(uid).set(user)
                                 .addOnSuccessListener {
-                                    nav.navigate("facilities") {
+                                    nav.navigate("main") {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 }
@@ -131,16 +127,15 @@ fun LoginScreen(nav: NavController) {
                             error = "Errore registrazione: ${it.message}"
                             loading = false
                         }
+
                 } else {
-                    // 🔐 LOGIN
                     auth.signInWithEmailAndPassword(email, password)
                         .addOnSuccessListener {
-                            nav.navigate("facilities") {
+                            nav.navigate("main") {
                                 popUpTo("login") { inclusive = true }
                             }
                         }
                         .addOnFailureListener {
-                            // Se login fallisce → abilita registrazione
                             isRegistering = true
                             error = "Utente non trovato, inserisci dati per registrarti"
                             loading = false
@@ -162,5 +157,3 @@ fun LoginScreen(nav: NavController) {
         }
     }
 }
-
-

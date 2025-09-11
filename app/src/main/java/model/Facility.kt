@@ -2,9 +2,12 @@ package com.example.isport.model
 
 data class Facility(
     val id: String = "",
-    val municipalityId: String = "",
     val name: String = "",
-    val sport: String = "",    // "TENNIS", "CALCIO", "BASKET"
+    val sport: String = "",
     val address: String = "",
-    val notes: String? = null
+    val notes: String = "",
+    val openHour: Int = 8,
+    val closeHour: Int = 20,
+    val openDays: List<String> = emptyList()
 )
+
