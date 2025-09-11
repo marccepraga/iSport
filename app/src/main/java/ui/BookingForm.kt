@@ -105,78 +105,101 @@ fun BookingForm(userId: String, facilityId: String, facilityName: String, onDone
 
                 val bookingDate = selectedDate
 
+                // 🔍 Controllo utente e comune
                 db.collection("users").document(userId).get()
                     .addOnSuccessListener { userSnap ->
-                        val residente = userSnap.getBoolean("isResident") ?: false
-                        if (!residente) {
-                            errorMsg = "Solo i residenti possono prenotare"
+                        val residence = userSnap.getString("residence") ?: ""
+                        if (residence.isBlank()) {
+                            errorMsg = "Comune di residenza non valido"
                             loading = false
                             return@addOnSuccessListener
                         }
 
-                        val startOfWeek = Calendar.getInstance().apply {
-                            time = now
-                            set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.time
-
-                        db.collection("bookings")
-                            .whereEqualTo("userId", userId)
-                            .whereGreaterThanOrEqualTo("date", Timestamp(startOfWeek))
-                            .get()
-                            .addOnSuccessListener { snap ->
-                                val totalOre = snap.documents.sumOf { it.getLong("durationHours")?.toInt() ?: 0 }
-                                if (totalOre + durata > 3) {
-                                    errorMsg = "Massimo 3 ore prenotabili a settimana"
+                        db.collection("facilities").document(facilityId).get()
+                            .addOnSuccessListener { facilitySnap ->
+                                val comuneCampo = facilitySnap.getString("comune") ?: ""
+                                if (comuneCampo.isBlank()) {
+                                    errorMsg = "Il campo non ha un comune assegnato"
                                     loading = false
                                     return@addOnSuccessListener
                                 }
 
-                                if (bookingDate.after(fine)) {
-                                    errorMsg = "Puoi prenotare solo entro 7 giorni"
+                                if (residence != comuneCampo) {
+                                    errorMsg = "Puoi prenotare solo campi nel tuo comune di residenza ($residence)"
                                     loading = false
                                     return@addOnSuccessListener
                                 }
+
+                                // ✅ Controllo ore settimanali
+                                val startOfWeek = Calendar.getInstance().apply {
+                                    time = now
+                                    set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
+                                    set(Calendar.HOUR_OF_DAY, 0)
+                                    set(Calendar.MINUTE, 0)
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }.time
 
                                 db.collection("bookings")
-                                    .whereEqualTo("facilityId", facilityId)
-                                    .whereEqualTo("date", Timestamp(bookingDate))
+                                    .whereEqualTo("userId", userId)
+                                    .whereGreaterThanOrEqualTo("date", Timestamp(startOfWeek))
                                     .get()
-                                    .addOnSuccessListener { overlaps ->
-                                        if (!overlaps.isEmpty) {
-                                            errorMsg = "Questo orario è già stato prenotato"
+                                    .addOnSuccessListener { snap ->
+                                        val totalOre = snap.documents.sumOf { it.getLong("durationHours")?.toInt() ?: 0 }
+                                        if (totalOre + durata > 3) {
+                                            errorMsg = "Massimo 3 ore prenotabili a settimana"
                                             loading = false
                                             return@addOnSuccessListener
                                         }
 
-                                        val booking = Booking(
-                                            userId = userId,
-                                            facilityId = facilityId,
-                                            date = Timestamp(bookingDate),
-                                            durationHours = durata
-                                        )
+                                        if (bookingDate.after(fine)) {
+                                            errorMsg = "Puoi prenotare solo entro 7 giorni"
+                                            loading = false
+                                            return@addOnSuccessListener
+                                        }
 
-                                        db.collection("bookings").add(booking)
-                                            .addOnSuccessListener {
-                                                println("🔥 Prenotazione salvata con id=${it.id}")
-                                                loading = false
-                                                onDone()
+                                        // 🔍 Controllo sovrapposizione prenotazioni
+                                        db.collection("bookings")
+                                            .whereEqualTo("facilityId", facilityId)
+                                            .whereEqualTo("date", Timestamp(bookingDate))
+                                            .get()
+                                            .addOnSuccessListener { overlaps ->
+                                                if (!overlaps.isEmpty) {
+                                                    errorMsg = "Questo orario è già stato prenotato"
+                                                    loading = false
+                                                    return@addOnSuccessListener
+                                                }
+
+                                                val booking = Booking(
+                                                    userId = userId,
+                                                    facilityId = facilityId,
+                                                    date = Timestamp(bookingDate),
+                                                    durationHours = durata
+                                                )
+
+                                                db.collection("bookings").add(booking)
+                                                    .addOnSuccessListener {
+                                                        println("🔥 Prenotazione salvata con id=${it.id}")
+                                                        loading = false
+                                                        onDone()
+                                                    }
+                                                    .addOnFailureListener { e ->
+                                                        errorMsg = "Errore: ${e.message}"
+                                                        loading = false
+                                                    }
                                             }
                                             .addOnFailureListener { e ->
-                                                errorMsg = "Errore: ${e.message}"
+                                                errorMsg = "Errore controllo orari: ${e.message}"
                                                 loading = false
                                             }
                                     }
                                     .addOnFailureListener { e ->
-                                        errorMsg = "Errore controllo orari: ${e.message}"
+                                        errorMsg = "Errore controllo ore: ${e.message}"
                                         loading = false
                                     }
                             }
                             .addOnFailureListener { e ->
-                                errorMsg = "Errore controllo ore: ${e.message}"
+                                errorMsg = "Errore lettura campo: ${e.message}"
                                 loading = false
                             }
                     }

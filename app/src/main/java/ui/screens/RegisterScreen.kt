@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.isport.model.User
@@ -23,6 +24,7 @@ fun RegisterScreen(nav: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var residence by remember { mutableStateOf("") }
 
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -34,13 +36,21 @@ fun RegisterScreen(nav: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Registrati", style = MaterialTheme.typography.headlineSmall)
+        Text("Registrazione", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(24.dp))
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Nome") },
+            singleLine = true
+        )
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = residence,
+            onValueChange = { residence = it },
+            label = { Text("Comune di residenza") },
             singleLine = true
         )
         Spacer(Modifier.height(12.dp))
@@ -57,7 +67,8 @@ fun RegisterScreen(nav: NavController) {
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
-            singleLine = true
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation()
         )
         Spacer(Modifier.height(12.dp))
 
@@ -65,7 +76,8 @@ fun RegisterScreen(nav: NavController) {
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
             label = { Text("Conferma Password") },
-            singleLine = true
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation()
         )
         Spacer(Modifier.height(24.dp))
 
@@ -77,7 +89,7 @@ fun RegisterScreen(nav: NavController) {
         Button(
             onClick = {
                 errorMsg = null
-                if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || residence.isBlank()) {
                     errorMsg = "Compila tutti i campi"
                     return@Button
                 }
@@ -90,18 +102,21 @@ fun RegisterScreen(nav: NavController) {
 
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener { authResult ->
-                        val userId = authResult.user?.uid ?: ""
+                        val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
                         val user = User(
-                            id = userId,
+                            id = uid, // 👈 uid salvato sia come campo
                             name = name,
                             email = email,
-                            isResident = true // Puoi decidere se cambiarlo dopo
+                            residence = residence,
+                            isAdmin = false
                         )
 
-                        db.collection("users").document(userId).set(user)
+                        // 👇 Salva con documentId = uid
+                        db.collection("users").document(uid).set(user)
                             .addOnSuccessListener {
                                 Toast.makeText(context, "Registrazione completata", Toast.LENGTH_SHORT).show()
-                                nav.navigate("facilities") {
+                                nav.navigate("main") {
                                     popUpTo("register") { inclusive = true }
                                 }
                             }

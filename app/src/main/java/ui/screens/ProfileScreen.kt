@@ -5,31 +5,42 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.firebase.firestore.FirebaseFirestore
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ProfileScreen(userId: String, nav: NavController) {
     val db = FirebaseFirestore.getInstance()
+    val auth = FirebaseAuth.getInstance()
+
     var name by remember { mutableStateOf("...") }
     var isAdmin by remember { mutableStateOf(false) }
-    var isResident by remember { mutableStateOf(false) }
+    var residence by remember { mutableStateOf("...") }
     var loading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(userId) {
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { doc ->
-                name = doc.getString("name") ?: "Sconosciuto"
-                isAdmin = doc.getBoolean("admin") ?: false
-                isResident = doc.getBoolean("resident") ?: false
-                loading = false
+    // ✅ Controlla se userId è valido
+    val safeUserId = if (userId.isNotBlank()) userId else auth.currentUser?.uid
+
+    LaunchedEffect(safeUserId) {
+        if (safeUserId.isNullOrBlank()) {
+            // Nessun utente → torna al login
+            nav.navigate("login") {
+                popUpTo(0) { inclusive = true }
             }
-            .addOnFailureListener {
-                name = "Errore nel caricamento"
-                loading = false
-            }
+        } else {
+            db.collection("users").document(safeUserId).get()
+                .addOnSuccessListener { doc ->
+                    name = doc.getString("name") ?: "Sconosciuto"
+                    isAdmin = doc.getBoolean("admin") ?: false
+                    residence = doc.getString("residence") ?: "Non specificato"
+                    loading = false
+                }
+                .addOnFailureListener {
+                    name = "Errore nel caricamento"
+                    loading = false
+                }
+        }
     }
 
     Column(Modifier.padding(16.dp)) {
@@ -41,19 +52,18 @@ fun ProfileScreen(userId: String, nav: NavController) {
         } else {
             Text("Nome: $name")
             Text("Ruolo: ${if (isAdmin) "Admin" else "Utente"}")
-            Text("Residente: ${if (isResident) "Sì" else "No"}")
+            Text("Residenza: $residence")
         }
 
         Spacer(Modifier.height(32.dp))
 
         Button(onClick = {
-            FirebaseAuth.getInstance().signOut()
+            auth.signOut()
             nav.navigate("login") {
-                popUpTo(0) { inclusive = true } // 🔁 elimina tutto lo stack
+                popUpTo(0) { inclusive = true } // 🔁 reset stack
             }
         }) {
             Text("Logout")
         }
     }
 }
-

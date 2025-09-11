@@ -5,6 +5,7 @@ data class Facility(
     val name: String = "",
     val sport: String = "",
     val address: String = "",
+    val comune: String = "",
     val notes: String = "",
     val openHour: Int = 8,
     val closeHour: Int = 20,

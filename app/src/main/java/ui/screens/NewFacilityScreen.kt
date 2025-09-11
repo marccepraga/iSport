@@ -11,7 +11,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 
-
 @Composable
 fun NewFacilityScreen(nav: NavController) {
     val db = FirebaseFirestore.getInstance()
@@ -19,6 +18,7 @@ fun NewFacilityScreen(nav: NavController) {
     var name by remember { mutableStateOf("") }
     var sport by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+    var comune by remember { mutableStateOf("") } // 👈 Campo nuovo
     var notes by remember { mutableStateOf("") }
     var openHour by remember { mutableStateOf(8) }
     var closeHour by remember { mutableStateOf(20) }
@@ -39,10 +39,16 @@ fun NewFacilityScreen(nav: NavController) {
 
         OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome campo") })
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = sport, onValueChange = { sport = it }, label = { Text("Sport") })
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Indirizzo") })
         Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(value = comune, onValueChange = { comune = it }, label = { Text("Comune") }) // 👈 Campo nuovo
+        Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Note (opzionale)") })
         Spacer(Modifier.height(8.dp))
 
@@ -52,6 +58,7 @@ fun NewFacilityScreen(nav: NavController) {
             label = { Text("Ora apertura") }
         )
         Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = closeHour.toString(),
             onValueChange = { closeHour = it.toIntOrNull() ?: 0 },
@@ -85,7 +92,7 @@ fun NewFacilityScreen(nav: NavController) {
         }
 
         Button(onClick = {
-            if (name.isBlank() || sport.isBlank() || address.isBlank()) {
+            if (name.isBlank() || sport.isBlank() || address.isBlank() || comune.isBlank()) {
                 error = "Compila tutti i campi obbligatori"
                 return@Button
             }
@@ -94,6 +101,7 @@ fun NewFacilityScreen(nav: NavController) {
                 name = name,
                 sport = sport,
                 address = address,
+                comune = comune, // 👈 Salva il comune nel modello
                 notes = notes,
                 openHour = openHour,
                 closeHour = closeHour,

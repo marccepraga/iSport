@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import androidx.navigation.navArgument
 import com.example.isport.ui.screens.*
 import com.google.firebase.auth.FirebaseAuth
 
@@ -39,16 +38,15 @@ fun ISportApp() {
         navController = nav,
         startDestination = if (isLoggedIn) "main" else "login"
     ) {
-        composable("login") {
-            LoginScreen(nav)
-        }
+        composable("login") { LoginScreen(nav) }
+
+        composable("register") { RegisterScreen(nav) }
 
         composable("main") {
             MainScaffold(nav = nav, userId = userId)
         }
     }
 }
-
 
 @Composable
 fun MainScaffold(nav: NavHostController, userId: String) {
@@ -88,7 +86,9 @@ fun MainScaffold(nav: NavHostController, userId: String) {
             startDestination = "facilities",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("facilities") { FacilitiesScreen(nav = childNav, userId = userId) }
+            composable("facilities") {
+                FacilitiesScreen(nav = childNav, userId = userId)
+            }
 
             composable("facility_detail") {
                 FacilityDetailScreen(navController = childNav)
@@ -98,11 +98,8 @@ fun MainScaffold(nav: NavHostController, userId: String) {
                 BookingsScreen(userId = userId, nav = childNav)
             }
 
-            composable("profile") { ProfileScreen(userId = userId, nav = childNav) }
-
-
-            composable("login") {
-                LoginScreen(nav)
+            composable("profile") {
+                ProfileScreen(userId = userId, nav = nav)
             }
 
             composable("bookingForm/{facilityId}/{facilityName}") { backStack ->
@@ -116,20 +113,16 @@ fun MainScaffold(nav: NavHostController, userId: String) {
                 }
             }
 
-            // ✅ Solo UNA definizione per edit_facility
             composable("edit_facility/{facilityId}") { backStackEntry ->
                 val fid = backStackEntry.arguments?.getString("facilityId") ?: ""
                 EditFacilityScreen(facilityId = fid, nav = childNav)
             }
 
-            // ✅ Nuovo campo (senza ID)
             composable("new_facility") {
                 NewFacilityScreen(nav = childNav)
             }
         }
     }
 }
-
-
 
 data class BottomNavItem(val route: String, val label: String, val icon: ImageVector)
