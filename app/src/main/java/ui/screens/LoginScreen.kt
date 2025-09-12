@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,65 +21,80 @@ fun LoginScreen(nav: NavController) {
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
 
-    Column(
+    // Layout principale centrato nello schermo
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
-        verticalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        Text("Login", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            singleLine = true
-        )
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
-        Spacer(Modifier.height(16.dp))
-
-        if (error != null) {
-            Text(error!!, color = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.height(8.dp))
-        }
-
-        Button(
-            onClick = {
-                loading = true
-                error = null
-
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnSuccessListener {
-                        nav.navigate("main") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    }
-                    .addOnFailureListener {
-                        error = "Email o password non validi"
-                        loading = false
-                    }
-            },
-            enabled = !loading
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (loading) "Attendi..." else "Login")
-        }
+            Text("Login", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(20.dp))
 
-        Spacer(Modifier.height(12.dp))
+            // Campi di input per email e password
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(12.dp))
 
-        TextButton(onClick = {
-            nav.navigate("register")
-        }) {
-            Text("Non hai un account? Registrati")
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(16.dp))
+
+            // Mostra eventuali errori di login
+            if (error != null) {
+                Text(error!!, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // Pulsante login
+            Button(
+                onClick = {
+                    loading = true
+                    error = null
+
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnSuccessListener {
+                            nav.navigate("main") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                        .addOnFailureListener {
+                            error = "Email o password non validi"
+                            loading = false
+                        }
+                },
+                enabled = !loading,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            ) {
+                Text(if (loading) "Attendi..." else "Login")
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Link per registrazione nuovo account
+            TextButton(
+                onClick = { nav.navigate("register") },
+                modifier = Modifier.fillMaxWidth(0.85f)
+            ) {
+                Text("Non hai un account? Registrati")
+            }
         }
     }
 }

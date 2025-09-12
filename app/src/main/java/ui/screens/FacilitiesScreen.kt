@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,9 +97,16 @@ fun FacilitiesScreen(nav: NavController? = null, userId: String) {
                         onClick = { nav?.navigate("new_facility") },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
-                        Text("➕ Aggiungi nuovo campo")
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Aggiungi nuovo campo",
+                            tint = MaterialTheme.colorScheme.onPrimary // colore bianco sul pulsante
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Aggiungi nuovo campo")
                     }
                 }
+
             }
         }
     }

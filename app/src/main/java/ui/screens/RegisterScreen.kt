@@ -29,119 +29,134 @@ fun RegisterScreen(nav: NavController) {
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
 
-    Column(
+    // Layout principale centrato
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentAlignment = Alignment.Center
     ) {
-        Text("Registrazione", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nome") },
-            singleLine = true
-        )
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = residence,
-            onValueChange = { residence = it },
-            label = { Text("Comune di residenza") },
-            singleLine = true
-        )
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            singleLine = true
-        )
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation()
-        )
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Conferma Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation()
-        )
-        Spacer(Modifier.height(24.dp))
-
-        if (errorMsg != null) {
-            Text(errorMsg!!, color = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.height(8.dp))
-        }
-
-        Button(
-            onClick = {
-                errorMsg = null
-                if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || residence.isBlank()) {
-                    errorMsg = "Compila tutti i campi"
-                    return@Button
-                }
-                if (password != confirmPassword) {
-                    errorMsg = "Le password non coincidono"
-                    return@Button
-                }
-
-                loading = true
-
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnSuccessListener { authResult ->
-                        val uid = authResult.user?.uid ?: return@addOnSuccessListener
-
-                        val user = User(
-                            id = uid, // 👈 uid salvato sia come campo
-                            name = name,
-                            email = email,
-                            residence = residence,
-                            isAdmin = false
-                        )
-
-                        // 👇 Salva con documentId = uid
-                        db.collection("users").document(uid).set(user)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Registrazione completata", Toast.LENGTH_SHORT).show()
-                                nav.navigate("main") {
-                                    popUpTo("register") { inclusive = true }
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                errorMsg = "Errore salvataggio utente: ${e.message}"
-                                loading = false
-                            }
-                    }
-                    .addOnFailureListener { e ->
-                        errorMsg = "Errore registrazione: ${e.message}"
-                        loading = false
-                    }
-            },
-            enabled = !loading
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (loading) "Attendi..." else "Registrati")
-        }
+            Text("Registrazione", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(24.dp))
 
-        Spacer(Modifier.height(16.dp))
-        TextButton(onClick = {
-            nav.navigate("login") {
-                popUpTo("register") { inclusive = true }
+            // Campi di input utente
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = residence,
+                onValueChange = { residence = it },
+                label = { Text("Comune di residenza") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Conferma Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(Modifier.height(20.dp))
+
+            // Messaggio di errore se presente
+            errorMsg?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(8.dp))
             }
-        }) {
-            Text("Hai già un account? Accedi")
+
+            // Pulsante per registrarsi
+            Button(
+                onClick = {
+                    errorMsg = null
+                    if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || residence.isBlank()) {
+                        errorMsg = "Compila tutti i campi"
+                        return@Button
+                    }
+                    if (password != confirmPassword) {
+                        errorMsg = "Le password non coincidono"
+                        return@Button
+                    }
+
+                    loading = true
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnSuccessListener { authResult ->
+                            val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
+                            val user = User(
+                                id = uid,
+                                name = name,
+                                email = email,
+                                residence = residence,
+                                isAdmin = false
+                            )
+
+                            // Salva l'utente su Firestore con documentId = uid
+                            db.collection("users").document(uid).set(user)
+                                .addOnSuccessListener {
+                                    Toast.makeText(context, "Registrazione completata", Toast.LENGTH_SHORT).show()
+                                    nav.navigate("main") {
+                                        popUpTo("register") { inclusive = true }
+                                    }
+                                }
+                                .addOnFailureListener { e ->
+                                    errorMsg = "Errore salvataggio utente: ${e.message}"
+                                    loading = false
+                                }
+                        }
+                        .addOnFailureListener { e ->
+                            errorMsg = "Errore registrazione: ${e.message}"
+                            loading = false
+                        }
+                },
+                enabled = !loading,
+                modifier = Modifier.fillMaxWidth(0.85f)
+            ) {
+                Text(if (loading) "Attendi..." else "Registrati")
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Link per tornare al login
+            TextButton(onClick = {
+                nav.navigate("login") {
+                    popUpTo("register") { inclusive = true }
+                }
+            }) {
+                Text("Hai già un account? Accedi")
+            }
         }
     }
 }

@@ -61,22 +61,20 @@ fun MainScaffold(nav: NavHostController, userId: String) {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute !in listOf("bookingForm")) {
-                NavigationBar {
-                    items.forEach { item ->
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
-                            selected = currentRoute == item.route,
-                            onClick = {
-                                childNav.navigate(item.route) {
-                                    popUpTo(childNav.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+            NavigationBar {
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = currentRoute == item.route,
+                        onClick = {
+                            childNav.navigate(item.route) {
+                                popUpTo(childNav.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }
@@ -95,23 +93,39 @@ fun MainScaffold(nav: NavHostController, userId: String) {
             }
 
             composable("bookings") {
-                BookingsScreen(userId = userId, nav = childNav)
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val dynamicUserId = currentUser?.uid ?: ""
+                BookingsScreen(userId = dynamicUserId, nav = childNav)
             }
 
+
             composable("profile") {
-                ProfileScreen(userId = userId, nav = nav)
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val dynamicUserId = currentUser?.uid ?: ""
+                ProfileScreen(userId = dynamicUserId, nav = nav)
             }
 
             composable("bookingForm/{facilityId}/{facilityName}") { backStack ->
                 val fid = backStack.arguments?.getString("facilityId") ?: ""
                 val name = backStack.arguments?.getString("facilityName") ?: ""
-                BookingForm(userId = userId, facilityId = fid, facilityName = name) {
+
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val dynamicUserId = currentUser?.uid ?: ""
+
+                BookingForm(
+                    userId = dynamicUserId,   // 👈 sempre UID aggiornato
+                    facilityId = fid,
+                    facilityName = name,
+                    nav = childNav
+                ) {
                     childNav.navigate("bookings") {
                         popUpTo("facilities") { inclusive = false }
                         launchSingleTop = true
+                        restoreState = true
                     }
                 }
             }
+
 
             composable("edit_facility/{facilityId}") { backStackEntry ->
                 val fid = backStackEntry.arguments?.getString("facilityId") ?: ""

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -40,7 +41,12 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
             }
     }
 
-    Column(Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text("Modifica campo", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
 
@@ -49,6 +55,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
             return@Column
         }
 
+        // Intestazione con il nome del campo
         Text("Campo: $name")
         Spacer(Modifier.height(16.dp))
 
@@ -67,18 +74,19 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
         )
         Spacer(Modifier.height(16.dp))
 
-        // Selezione multipla dei giorni di apertura tramite checkbox
-        Text("Giorni di apertura")
-        Spacer(Modifier.height(8.dp))
+        // Giorni di apertura centrati
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Giorni di apertura")
+            Spacer(Modifier.height(8.dp))
 
-        allDays.forEach { day ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .toggleable(
-                        value = selectedDays.contains(day),
-                        onValueChange = {
+            allDays.forEach { day ->
+                Row(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = selectedDays.contains(day),
+                        onCheckedChange = {
                             selectedDays = if (it) {
                                 selectedDays + day
                             } else {
@@ -86,13 +94,9 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
                             }
                         }
                     )
-            ) {
-                Checkbox(
-                    checked = selectedDays.contains(day),
-                    onCheckedChange = null // Gestito da toggleable
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(day)
+                    Spacer(Modifier.width(8.dp))
+                    Text(day)
+                }
             }
         }
 
@@ -109,37 +113,46 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
             Spacer(Modifier.height(8.dp))
         }
 
-        // Pulsante per salvare le modifiche su Firestore
-        Button(onClick = {
-            if (openHour >= closeHour) {
-                error = "L'orario di apertura deve essere inferiore a quello di chiusura"
-                return@Button
+        // Pulsanti affiancati
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = {
+                    if (openHour >= closeHour) {
+                        error = "L'orario di apertura deve essere inferiore a quello di chiusura"
+                        return@Button
+                    }
+
+                    db.collection("facilities").document(facilityId)
+                        .update(
+                            mapOf(
+                                "openHour" to openHour,
+                                "closeHour" to closeHour,
+                                "openDays" to selectedDays
+                            )
+                        )
+                        .addOnSuccessListener {
+                            success = true
+                            error = null
+                        }
+                        .addOnFailureListener {
+                            error = "Errore salvataggio: ${it.message}"
+                            success = false
+                        }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Salva modifiche")
             }
 
-            db.collection("facilities").document(facilityId)
-                .update(
-                    mapOf(
-                        "openHour" to openHour,
-                        "closeHour" to closeHour,
-                        "openDays" to selectedDays
-                    )
-                )
-                .addOnSuccessListener {
-                    success = true
-                    error = null
-                }
-                .addOnFailureListener {
-                    error = "Errore salvataggio: ${it.message}"
-                    success = false
-                }
-        }) {
-            Text("Salva modifiche")
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedButton(onClick = { nav.popBackStack() }) {
-            Text("Torna indietro")
+            OutlinedButton(
+                onClick = { nav.popBackStack() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Torna indietro")
+            }
         }
     }
 }
