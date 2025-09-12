@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -15,8 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
 @Composable
-fun FacilitiesScreen(nav: NavController? = null, userId: String)
- {
+fun FacilitiesScreen(nav: NavController? = null, userId: String) {
     val db = FirebaseFirestore.getInstance()
     val currentUser = FirebaseAuth.getInstance().currentUser
     val userId = currentUser?.uid
@@ -24,6 +24,7 @@ fun FacilitiesScreen(nav: NavController? = null, userId: String)
 
     var facilities by remember { mutableStateOf<List<Facility>>(emptyList()) }
 
+    // Recupera informazioni sull’utente e controlla se è un admin
     LaunchedEffect(userId) {
         if (userId != null) {
             db.collection("users").document(userId).get()
@@ -33,6 +34,7 @@ fun FacilitiesScreen(nav: NavController? = null, userId: String)
         }
     }
 
+    // Listener che aggiorna in tempo reale la lista dei campi sportivi
     DisposableEffect(Unit) {
         val reg: ListenerRegistration = db.collection("facilities")
             .addSnapshotListener { snap, e ->
@@ -45,41 +47,61 @@ fun FacilitiesScreen(nav: NavController? = null, userId: String)
     }
 
     Scaffold { padding ->
-        Column(Modifier.padding(padding).padding(16.dp)) {
-            Text("Campi sportivi disponibili", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center // centra tutto il contenuto
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Campi Sportivi Disponibili", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(20.dp))
 
-            if (facilities.isEmpty()) {
-                Text("Nessun campo presente.")
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(facilities, key = { it.id }) { f ->
-                        FacilityCard(f, isAdmin = isAdmin,
-                            onBook = {
-                                nav?.navigate("bookingForm/${Uri.encode(f.id)}/${Uri.encode(f.name)}")
-                            },
-                            onEdit = {
-                                nav?.navigate("edit_facility/${f.id}")
-                            }
-                        )
+                // Se non ci sono campi mostra un messaggio, altrimenti la lista
+                if (facilities.isEmpty()) {
+                    Text("Nessun campo presente.")
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
+                    ) {
+                        items(facilities, key = { it.id }) { f ->
+                            FacilityCard(
+                                f,
+                                isAdmin = isAdmin,
+                                onBook = {
+                                    nav?.navigate("bookingForm/${Uri.encode(f.id)}/${Uri.encode(f.name)}")
+                                },
+                                onEdit = {
+                                    nav?.navigate("edit_facility/${f.id}")
+                                }
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp))
 
-            // ✅ Pulsante solo se admin
-            if (isAdmin) {
-                Button(onClick = {
-                    nav?.navigate("new_facility")  // ← senza ID = crea nuovo
-                }) {
-                    Text("➕ Aggiungi nuovo campo")
+                // Pulsante di aggiunta visibile solo agli admin
+                if (isAdmin) {
+                    Button(
+                        onClick = { nav?.navigate("new_facility") },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("➕ Aggiungi nuovo campo")
+                    }
                 }
             }
         }
     }
 }
-
 
 @Composable
 private fun FacilityCard(
@@ -88,15 +110,29 @@ private fun FacilityCard(
     onBook: () -> Unit,
     onEdit: () -> Unit
 ) {
-    Card {
-        Column(Modifier.padding(16.dp)) {
+    // Card centrata con dettagli del campo
+    Card(
+        modifier = Modifier.fillMaxWidth(0.9f)
+    ) {
+        Column(
+            Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(f.name, style = MaterialTheme.typography.titleMedium)
             Text("${f.sport} — ${f.address}")
             if (!f.notes.isNullOrBlank()) {
                 Text("Note: ${f.notes}", style = MaterialTheme.typography.bodySmall)
             }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            Spacer(Modifier.height(12.dp))
+
+            // Pulsanti centrati
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
                 Button(onClick = { onBook() }) {
                     Text("Prenota")
                 }
@@ -109,4 +145,3 @@ private fun FacilityCard(
         }
     }
 }
-

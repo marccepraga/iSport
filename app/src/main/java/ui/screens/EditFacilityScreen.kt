@@ -24,7 +24,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
     var error by remember { mutableStateOf<String?>(null) }
     var success by remember { mutableStateOf(false) }
 
-    // 🔄 Carica dati struttura
+    // Caricamento iniziale dei dati della struttura da Firestore
     LaunchedEffect(facilityId) {
         db.collection("facilities").document(facilityId).get()
             .addOnSuccessListener { doc ->
@@ -52,6 +52,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
         Text("Campo: $name")
         Spacer(Modifier.height(16.dp))
 
+        // Campi di input per orario di apertura e chiusura
         OutlinedTextField(
             value = openHour.toString(),
             onValueChange = { openHour = it.toIntOrNull() ?: openHour },
@@ -66,6 +67,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
         )
         Spacer(Modifier.height(16.dp))
 
+        // Selezione multipla dei giorni di apertura tramite checkbox
         Text("Giorni di apertura")
         Spacer(Modifier.height(8.dp))
 
@@ -96,6 +98,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
 
         Spacer(Modifier.height(16.dp))
 
+        // Messaggi di errore o conferma salvataggio
         if (error != null) {
             Text(error!!, color = MaterialTheme.colorScheme.error)
             Spacer(Modifier.height(8.dp))
@@ -106,6 +109,7 @@ fun EditFacilityScreen(facilityId: String, nav: NavController) {
             Spacer(Modifier.height(8.dp))
         }
 
+        // Pulsante per salvare le modifiche su Firestore
         Button(onClick = {
             if (openHour >= closeHour) {
                 error = "L'orario di apertura deve essere inferiore a quello di chiusura"
